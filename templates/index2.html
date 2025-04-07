@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blackjack</title>
+</head>
+<body>
+    <h1>Welcome, {{ session['username'] }}</h1>
+    <p>Chips: {{ chips }}</p>
+    <p>Wins: {{ wins }}</p>
+    <p>Losses: {{ losses }}</p>
+    {% set total = wins + losses %}
+    <p>Win Rate: {{ ((wins / total) * 100) | round(1) if total else 0 }}%</p>
+    <p>Highest Chips: {{ highest }}</p>
+    <a href="/logout">Logout</a>
+
+    <hr>
+
+    <h2>Your Hand</h2>
+    <p>{{ player }}</p>
+
+    <h2>Dealer's Hand</h2>
+    <p>{{ dealer }}</p>
+
+    <p><strong>{{ message }}</strong></p>
+
+    {% if not game_over %}
+        <form method="post" action="/bet">
+            <input type="number" name="bet" placeholder="Enter your bet" required>
+            <button type="submit">Deal</button>
+        </form>
+        <a href="/hit">Hit</a> | <a href="/stand">Stand</a>
+    {% else %}
+        <form method="post" action="/bet">
+            <input type="number" name="bet" placeholder="Enter your bet" required>
+            <button type="submit">Play Again</button>
+        </form>
+    {% endif %}
+</body>
+</html>
