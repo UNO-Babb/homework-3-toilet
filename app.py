@@ -60,7 +60,11 @@ def hand_value(hand):
 @app.route("/")
 def index():
     if "username" not in session:
-        return redirect("/login")
+        return redirect("/signup")  # Redirect to signup page if not logged in
+
+    # Get values from session, use defaults (0) if not set
+    wins = session.get("wins", 0)
+    losses = session.get("losses", 0)
 
     return render_template("index.html",
         player=session.get("player", []),
@@ -69,8 +73,8 @@ def index():
         game_over=session.get("game_over", False),
         bet=session.get("bet", 0),
         chips=session["chips"],
-        wins=session["wins"],
-        losses=session["losses"],
+        wins=wins,
+        losses=losses,
         highest=session["highest_chips"]
     )
 
@@ -78,22 +82,29 @@ def index():
 def signup():
     if request.method == "POST":
         username = request.form["username"]
-        password = hash_password(request.form["password"])
+        password = request.form["password"]
+        hashed_password = hash_password(password)
         conn = sqlite3.connect("users.db")
         c = conn.cursor()
-        try:
-            c.execute("INSERT INTO users (username, password, chips, wins, losses, highest_chips, games_played) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                      (username, password, 100, 0, 0, 100, 0))
-            conn.commit()
-        except sqlite3.IntegrityError:
-            return "Username already exists."
+        
+        # Check if the username already exists
+        c.execute("SELECT * FROM users WHERE username = ?", (username,))
+        existing_user = c.fetchone()
+        if existing_user:
+            return "Username already exists. Please choose a different one."
+
+        # Insert new user into the database with default values
+        c.execute("INSERT INTO users (username, password, chips, wins, losses, highest_chips, games_played) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                  (username, hashed_password, 100, 0, 0, 0, 0))
+        conn.commit()
         conn.close()
-        return redirect("/login")
-    return render_template("signup.html")
+        
+        return redirect("/login")  # Redirect to the login page after sign-up is successful
+    
+    return render_template("signup.html")  # Show the signup form
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    print("Entered the login route.")
     if request.method == "POST":
         username = request.form["username"]
         password = hash_password(request.form["password"])
@@ -105,11 +116,11 @@ def login():
         if user:
             session["username"] = user[1]
             session["chips"] = user[3]
-            session["wins"] = user[4]
-            session["losses"] = user[5]
+            session["wins"] = user[4] if user[4] is not None else 0  # Ensure it's not None
+            session["losses"] = user[5] if user[5] is not None else 0  # Ensure it's not None
             session["highest_chips"] = user[6]
             session["games_played"] = user[7]
-            return redirect("/")
+            return redirect("/")  # Redirect to home page after successful login
         return "Invalid login."
     return render_template('login.html')
 
@@ -166,6 +177,7 @@ def stand():
     dealer = session["dealer_full"]
     while hand_value(dealer) < 17:
         dealer.append(deal_card(session["deck"]))
+
     session["dealer_shown"] = dealer
 
     player_val = hand_value(session["player"])
