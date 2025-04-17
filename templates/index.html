@@ -5,35 +5,26 @@
 </head>
 <body>
     <h1>Welcome, {{ session['username'] }}</h1>
-    <p>Chips: {{ chips }}</p>
-    <p>Wins: {{ wins }}</p>
-    <p>Losses: {{ losses }}</p>
-    {% set total = wins + losses %}
-    <p>Win Rate: {{ ((wins / total) * 100) | round(1) if total else 0 }}%</p>
-    <p>Highest Chips: {{ highest }}</p>
-    <a href="/logout">Logout</a>
+    <p>Chips: {{ chips }} | Wins: {{ wins }} | Losses: {{ losses }} | Highest: {{ highest }}</p>
 
-    <hr>
-
-    <h2>Your Hand</h2>
-    <p>{{ player }}</p>
-
-    <h2>Dealer's Hand</h2>
-    <p>{{ dealer }}</p>
-
-    <p><strong>{{ message }}</strong></p>
-
-    {% if not game_over %}
-        <form method="post" action="/bet">
-            <input type="number" name="bet" placeholder="Enter your bet" required>
+    {% if not player %}
+        <form method="POST" action="/bet">
+            <input type="number" name="bet" placeholder="Place your bet" required>
             <button type="submit">Deal</button>
         </form>
-        <a href="/hit">Hit</a> | <a href="/stand">Stand</a>
     {% else %}
-        <form method="post" action="/bet">
-            <input type="number" name="bet" placeholder="Enter your bet" required>
-            <button type="submit">Play Again</button>
-        </form>
+        <p>Your Hand: {{ player }} ({{ player|length }} cards)</p>
+        <p>Dealer Shows: {{ dealer }}</p>
+        <p>{{ message }}</p>
+
+        {% if not game_over %}
+            <a href="/hit"><button>Hit</button></a>
+            <a href="/stand"><button>Stand</button></a>
+        {% else %}
+            <a href="/reset"><button>Play Again</button></a>
+        {% endif %}
     {% endif %}
+
+    <p><a href="/logout">Logout</a></p>
 </body>
 </html>
